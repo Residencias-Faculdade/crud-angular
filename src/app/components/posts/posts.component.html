@@ -1,0 +1,117 @@
+<div class="container">
+  <h2>publicações</h2>
+
+  <section class="card create-card">
+    <h3>Criar novo post (em memória)</h3>
+    <div class="form-grid">
+      <input
+        type="text"
+        placeholder="Título"
+        [value]="newTitle()"
+        (input)="newTitle.set($any($event.target).value)"
+        class="input"
+      />
+      <textarea
+        placeholder="Conteúdo"
+        [value]="newBody()"
+        (input)="newBody.set($any($event.target).value)"
+        rows="3"
+        class="input"
+      ></textarea>
+      <button type="button" (click)="createPost()" [disabled]="!canCreate()" class="btn btn-primary">
+        Criar post
+      </button>
+    </div>
+  </section>
+
+  <section class="section">
+    <h3 class="section-title">Meus posts <span class="badge">{{ userPosts().length }}</span></h3>
+    @if (!hasUserPosts()) {
+      <p class="empty">Você ainda não criou nenhum post.</p>
+    } @else {
+      <ul class="post-list">
+        @for (post of userPosts(); track post.id) {
+          <li class="post-item user-post">
+            @if (editingId() === post.id) {
+              <div class="edit-form">
+                <input type="text" [value]="editTitle()" (input)="editTitle.set($any($event.target).value)" class="input" />
+                <textarea [value]="editBody()" (input)="editBody.set($any($event.target).value)" rows="3" class="input"></textarea>
+                <div class="actions">
+                  <button type="button" (click)="saveEdit()" [disabled]="!canSaveEdit()" class="btn btn-primary">Salvar</button>
+                  <button type="button" (click)="cancelEdit()" class="btn btn-ghost">Cancelar</button>
+                </div>
+              </div>
+            } @else {
+              <span class="tag">meu post</span>
+              <h3>#{{ post.id }} - {{ post.title }}</h3>
+              <p>{{ post.body }}</p>
+              <div class="actions">
+                <button type="button" (click)="startEdit(post)" class="btn btn-ghost">Editar</button>
+                <button type="button" (click)="openDeleteModal(post)" class="btn btn-danger">Deletar</button>
+              </div>
+            }
+          </li>
+        }
+      </ul>
+    }
+  </section>
+
+  <section class="section">
+    <h3 class="section-title">Posts da API <span class="badge">{{ totalApiPosts() }}</span></h3>
+
+    @if (isLoading()) {
+      <div class="loading" role="status" aria-live="polite">buscando posts...</div>
+    }
+
+    @if (errorMessage()) {
+      <div class="error" role="alert">
+        <p>{{ errorMessage() }}</p>
+        <button type="button" (click)="fetchPosts()" class="btn">Recarregar</button>
+      </div>
+    }
+
+    @if (!isLoading() && !errorMessage()) {
+      @if (totalApiPosts() === 0) {
+        <p class="empty">Nenhum post da API.</p>
+      } @else {
+        <div class="pagination-info">
+          <span>{{ paginationInfo() }}</span>
+          <span class="muted">Página {{ currentPage() }} de {{ totalPages() }}</span>
+        </div>
+
+        <ul class="post-list">
+          @for (post of paginatedApiPosts(); track post.id) {
+            <li class="post-item api-post">
+              <span class="tag tag-api">api</span>
+              <h3>#{{ post.id }} - {{ post.title }}</h3>
+              <p>{{ post.body }}</p>
+            </li>
+          }
+        </ul>
+
+        @if (totalPages() > 1) {
+          <nav class="pagination" aria-label="Paginação">
+            <button type="button" (click)="prevPage()" [disabled]="!hasPrev()" class="btn btn-ghost">‹ Anterior</button>
+            @for (page of pageNumbers(); track page) {
+              <button type="button" (click)="goToPage(page)" [class.active]="page === currentPage()" class="btn btn-page" [attr.aria-current]="page === currentPage() ? 'page' : null">{{ page }}</button>
+            }
+            <button type="button" (click)="nextPage()" [disabled]="!hasNext()" class="btn btn-ghost">Próxima ›</button>
+          </nav>
+        }
+      }
+    }
+  </section>
+
+  @if (showDeleteModal()) {
+    <div class="modal-overlay" (click)="closeDeleteModal()" role="presentation">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" (click)="$event.stopPropagation()">
+        <h3 id="modal-title">Confirmar exclusão</h3>
+        <p>Tem certeza que deseja deletar o post <strong>"{{ postToDelete()?.title }}"</strong> (#{{ postToDelete()?.id }})? Essa ação não pode ser desfeita.</p>
+        <div class="actions modal-actions">
+          <button type="button" (click)="closeDeleteModal()" class="btn btn-ghost">Cancelar</button>
+          <button type="button" (click)="confirmDelete()" class="btn btn-danger">Deletar</button>
+        </div>
+      </div>
+    </div>
+  }
+</div>
