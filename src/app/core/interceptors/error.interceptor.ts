@@ -12,5 +12,5 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) =>
       console.error(`[HTTP ${req.method} ${req.url}]`, message);
 
       return throwError(() => new Error(message));
-    })
+    }),
   );

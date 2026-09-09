@@ -1,0 +1,65 @@
+{
+  "_comment": "COMPATIBILIDADE COM ATIVIDADENGX - realm importado no boot via docker-compose.yml --import-realm. COPIA IDENTICA de atividadengx/keycloak/realm.json para isolar, mas manter 1:1 (realm atividadengx, client frontend PKCE S256, redirectUris 3000/4200/4201/4202). Alterar aqui exige alterar na shell tambem.",
+  "realm": "atividadengx",
+  "enabled": true,
+  "displayName": "atividadengx",
+  "sslRequired": "external",
+  "registrationAllowed": true,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": false,
+  "roles": {
+    "realm": [
+      { "name": "admin", "description": "Administrador da aplicacao" },
+      { "name": "user", "description": "Usuario comum" }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "frontend",
+      "name": "frontend",
+      "description": "Frontend shell e micro frontends",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "authorizationServicesEnabled": false,
+      "redirectUris": [
+        "http://localhost:3000/*",
+        "http://localhost:4200/*",
+        "http://localhost:4201/*",
+        "http://localhost:4202/*",
+        "http://localhost:8080/*"
+      ],
+      "webOrigins": ["*"],
+      "protocol": "openid-connect",
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      }
+    }
+  ],
+  "users": [
+    {
+      "username": "Alec Vinicius",
+      "enabled": true,
+      "email": "alec.vinicius@exemplo.com",
+      "firstName": "Alec",
+      "lastName": "Vinicius",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Lost seas1",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["admin", "user"],
+      "clientRoles": {
+        "realm-management": ["realm-admin"]
+      }
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+# COMPATIBILIDADE COM ATIVIDADENGX - docker-compose
+# ARQUIVO NOVO (antes nao existia). Cria rede app-network + keycloak compartilhado com a shell.
+# Variaveis .env (FRONTEND_PORT, KEYCLOAK_PORT) alinhadas com atividadengx/.env.example
+# SHELL (atividadengx/docker-compose.yml) tambem define posts-crud com build ../primeiro-projeto,
+# entao este compose pode rodar standalone OU a shell orquestra tudo junto.
+services:
+  frontend: # renomear para posts-crud se quiser identico a shell, mas mantido frontend para retrocompat
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "${FRONTEND_PORT:-4200}:80" # mesma porta que shell espera em POSTS_CRUD_PORT
+    depends_on:
+      keycloak:
+        condition: service_started
+    networks:
+      - app-network # mesma rede da shell para comunicacao keycloak
+    restart: unless-stopped
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.2
+    command: start-dev --import-realm
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      KC_HTTP_ENABLED: "true"
+      KC_HOSTNAME_STRICT: "false"
+    ports:
+      - "${KEYCLOAK_PORT:-8080}:8080"
+    volumes:
+      - keycloak-data:/opt/keycloak/data
+      - ./keycloak/realm.json:/opt/keycloak/data/import/realm.json:ro
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/8080 && echo -e \"GET /health/ready HTTP/1.1\\r\\nhost: localhost\\r\\nConnection: close\\r\\n\\r\\n\" >&3 && cat <&3 | grep -q \"200\""]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+    restart: unless-stopped
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  keycloak-data:

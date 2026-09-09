@@ -1,24 +1,40 @@
-import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
+/**
+ * COMPATIBILIDADE COM ATIVIDADENGX - PostsComponent como Web Component
+ * MODIFICADO: ViewEncapsulation.ShadowDom para isolar estilos quando <posts-crud>
+ * e montado dentro da shell em :3000. Sem isso, CSS vazaria para a casca e vice-versa.
+ * Também movido de src/app/components/posts -> src/app/features/posts/presentation
+ * para Clean Architecture (domain/data/presentation) alinhada ao padrao da shell.
+ */
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ViewEncapsulation,
+  computed,
+  signal,
+} from '@angular/core';
 import { httpResource } from '@angular/common/http';
 
-import { Post } from '../../models/post';
-import { environment } from '../../../environments/environment';
+import { Post } from '../domain/post.model';
+import { environment } from '../../../../environments/environment';
+import { ConfirmModalComponent } from '../../../shared/components/modal/confirm-modal.component';
+import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 
 @Component({
-  selector: 'app-posts',
+  selector: 'app-posts', // usado internamente; tag publica e 'posts-crud' definida em src/main.ts
   standalone: true,
-  imports: [],
+  imports: [ConfirmModalComponent, PaginationComponent],
   templateUrl: './posts.component.html',
   styleUrl: './posts.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  encapsulation: ViewEncapsulation.ShadowDom, // ESSENCIAL: isola Shadow DOM para shell
 })
 export class PostsComponent {
-  private readonly postsResource = httpResource<Post[]>(
-    () => `${environment.apiUrl}/posts`
-  );
+  private readonly postsResource = httpResource<Post[]>(() => `${environment.apiUrl}/posts`);
 
   readonly apiPosts = computed(() => this.postsResource.value() ?? []);
-  readonly isLoading = computed(() => this.postsResource.isLoading() && this.apiPosts().length === 0);
+  readonly isLoading = computed(
+    () => this.postsResource.isLoading() && this.apiPosts().length === 0,
+  );
   readonly errorMessage = computed(() => {
     const err = this.postsResource.error() as Error | null;
     return err ? err.message : null;
@@ -29,17 +45,23 @@ export class PostsComponent {
 
   readonly newTitle = signal('');
   readonly newBody = signal('');
-  readonly canCreate = computed(() => this.newTitle().trim().length > 0 && this.newBody().trim().length > 0);
+  readonly canCreate = computed(
+    () => this.newTitle().trim().length > 0 && this.newBody().trim().length > 0,
+  );
 
   readonly editingId = signal<number | null>(null);
   readonly editTitle = signal('');
   readonly editBody = signal('');
-  readonly canSaveEdit = computed(() => this.editTitle().trim().length > 0 && this.editBody().trim().length > 0);
+  readonly canSaveEdit = computed(
+    () => this.editTitle().trim().length > 0 && this.editBody().trim().length > 0,
+  );
 
   readonly pageSize = 10;
   readonly currentPage = signal(1);
   readonly totalApiPosts = computed(() => this.apiPosts().length);
-  readonly totalPages = computed(() => Math.max(1, Math.ceil(this.totalApiPosts() / this.pageSize)));
+  readonly totalPages = computed(() =>
+    Math.max(1, Math.ceil(this.totalApiPosts() / this.pageSize)),
+  );
   readonly paginatedApiPosts = computed(() => {
     const start = (this.currentPage() - 1) * this.pageSize;
     return this.apiPosts().slice(start, start + this.pageSize);
@@ -109,7 +131,9 @@ export class PostsComponent {
     if (id === null || !this.canSaveEdit()) return;
 
     this.userPosts.update((posts) =>
-      posts.map((p) => (p.id === id ? { ...p, title: this.editTitle().trim(), body: this.editBody().trim() } : p))
+      posts.map((p) =>
+        p.id === id ? { ...p, title: this.editTitle().trim(), body: this.editBody().trim() } : p,
+      ),
     );
     this.cancelEdit();
   }
