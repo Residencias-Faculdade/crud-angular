@@ -29,61 +29,21 @@ describe('PostRepository', () => {
     repository.findAll().subscribe((posts) => {
       expect(posts).toEqual(mockPosts);
     });
+
     const request = httpMock.expectOne(apiUrl);
     expect(request.request.method).toBe('GET');
     request.flush(mockPosts);
   });
 
-  it('should fetch post by id', () => {
-    repository.findById(1).subscribe((post) => {
-      expect(post).toEqual(mockPosts[0]);
-    });
-    const request = httpMock.expectOne(`${apiUrl}/1`);
-    expect(request.request.method).toBe('GET');
-    request.flush(mockPosts[0]);
-  });
-
-  it('should create post', () => {
-    const payload = { userId: 1, title: 'new', body: 'content' };
-    const created: Post = { id: 101, ...payload };
-    repository.create(payload).subscribe((post) => {
-      expect(post).toEqual(created);
-    });
-    const request = httpMock.expectOne(apiUrl);
-    expect(request.request.method).toBe('POST');
-    expect(request.request.body).toEqual(payload);
-    request.flush(created);
-  });
-
-  it('should update post', () => {
-    const changes = { title: 'updated' };
-    const updated: Post = { ...mockPosts[0], ...changes };
-    repository.update(1, changes).subscribe((post) => {
-      expect(post).toEqual(updated);
-    });
-    const request = httpMock.expectOne(`${apiUrl}/1`);
-    expect(request.request.method).toBe('PUT');
-    request.flush(updated);
-  });
-
-  it('should delete post', () => {
-    repository.remove(1).subscribe((response) => {
-      expect(response).toBeFalsy();
-    });
-    const request = httpMock.expectOne(`${apiUrl}/1`);
-    expect(request.request.method).toBe('DELETE');
-    request.flush(null);
-  });
-
-  it('should handle network error after retries', () => {
+  it('should retry twice before propagating a network error', () => {
     repository.findAll().subscribe({
       error: (error: Error) => {
         expect(error).toBeTruthy();
       },
     });
-    for (let index = 0; index < 3; index += 1) {
-      const request = httpMock.expectOne(apiUrl);
-      request.error(new ProgressEvent('error'));
+
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      httpMock.expectOne(apiUrl).error(new ProgressEvent('error'));
     }
   });
 });

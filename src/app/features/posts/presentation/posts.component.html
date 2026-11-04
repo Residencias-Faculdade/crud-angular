@@ -8,13 +8,13 @@
         type="text"
         placeholder="Titulo"
         [value]="newTitle()"
-        (input)="newTitle.set($any($event.target).value)"
+        (input)="onNewTitleInput($event)"
         class="input"
       />
       <textarea
         placeholder="Conteudo"
         [value]="newBody()"
-        (input)="newBody.set($any($event.target).value)"
+        (input)="onNewBodyInput($event)"
         rows="3"
         class="input"
       ></textarea>
@@ -31,25 +31,25 @@
 
   <section class="section">
     <h3 class="section-title">
-      Meus posts <span class="badge">{{ userPosts().length }}</span>
+      Meus posts <span class="badge">{{ store.drafts().length }}</span>
     </h3>
-    @if (!hasUserPosts()) {
+    @if (!store.hasDrafts()) {
       <p class="empty">Voce ainda nao criou nenhum post.</p>
     } @else {
       <ul class="post-list">
-        @for (post of userPosts(); track post.id) {
+        @for (post of store.drafts(); track post.id) {
           <li class="post-item user-post">
             @if (editingId() === post.id) {
               <div class="edit-form">
                 <input
                   type="text"
                   [value]="editTitle()"
-                  (input)="editTitle.set($any($event.target).value)"
+                  (input)="onEditTitleInput($event)"
                   class="input"
                 />
                 <textarea
                   [value]="editBody()"
-                  (input)="editBody.set($any($event.target).value)"
+                  (input)="onEditBodyInput($event)"
                   rows="3"
                   class="input"
                 ></textarea>
@@ -88,27 +88,27 @@
 
   <section class="section">
     <h3 class="section-title">
-      Posts da API <span class="badge">{{ totalApiPosts() }}</span>
+      Posts da API <span class="badge">{{ store.totalPosts() }}</span>
     </h3>
-    @if (isLoading()) {
+    @if (store.isLoading()) {
       <div class="loading" role="status" aria-live="polite">buscando posts...</div>
     }
-    @if (errorMessage()) {
+    @if (store.errorMessage()) {
       <div class="error" role="alert">
-        <p>{{ errorMessage() }}</p>
-        <button type="button" (click)="fetchPosts()" class="btn">Recarregar</button>
+        <p>{{ store.errorMessage() }}</p>
+        <button type="button" (click)="reload()" class="btn">Recarregar</button>
       </div>
     }
-    @if (!isLoading() && !errorMessage()) {
-      @if (totalApiPosts() === 0) {
+    @if (!store.isLoading() && !store.errorMessage()) {
+      @if (store.totalPosts() === 0) {
         <p class="empty">Nenhum post da API.</p>
       } @else {
         <div class="pagination-info">
-          <span>{{ paginationInfo() }}</span>
-          <span class="muted">Pagina {{ currentPage() }} de {{ totalPages() }}</span>
+          <span>{{ store.paginationInfo() }}</span>
+          <span class="muted">Pagina {{ store.currentPage() }} de {{ store.totalPages() }}</span>
         </div>
         <ul class="post-list">
-          @for (post of paginatedApiPosts(); track post.id) {
+          @for (post of store.pagePosts(); track post.id) {
             <li class="post-item api-post">
               <span class="tag tag-api">api</span>
               <h3>#{{ post.id }} - {{ post.title }}</h3>
@@ -116,13 +116,13 @@
             </li>
           }
         </ul>
-        @if (totalPages() > 1) {
+        @if (store.totalPages() > 1) {
           <app-pagination
-            [currentPage]="currentPage()"
-            [totalPages]="totalPages()"
-            [pageNumbers]="pageNumbers()"
-            [hasPrev]="hasPrev()"
-            [hasNext]="hasNext()"
+            [currentPage]="store.currentPage()"
+            [totalPages]="store.totalPages()"
+            [pageNumbers]="store.pageNumbers()"
+            [hasPrev]="store.hasPrev()"
+            [hasNext]="store.hasNext()"
             (pageChange)="goToPage($event)"
             (prev)="prevPage()"
             (next)="nextPage()"
@@ -135,13 +135,7 @@
   <app-confirm-modal
     [open]="showDeleteModal()"
     [title]="'Confirmar exclusao'"
-    [message]="
-      'Tem certeza que deseja deletar o post \'' +
-      (postToDelete()?.title ?? '') +
-      '\' (#' +
-      (postToDelete()?.id ?? '') +
-      ')? Essa acao nao pode ser desfeita.'
-    "
+    [message]="deleteMessage()"
     (confirm)="confirmDelete()"
     (cancel)="closeDeleteModal()"
   />

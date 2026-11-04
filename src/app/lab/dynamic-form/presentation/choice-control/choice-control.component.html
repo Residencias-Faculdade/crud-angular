@@ -1,0 +1,60 @@
+@switch (widget()) {
+  @case ('radio') {
+    <div class="options">
+      @for (option of field().options; track option.value) {
+        <label class="option">
+          <input
+            type="radio"
+            [name]="field().name"
+            [value]="option.value"
+            [attr.value]="option.value"
+            [formControl]="control()"
+          />
+          <span class="option-text">
+            <span class="option-label">{{ option.label }}</span>
+            @if (option.description) {
+              <span class="option-description">{{ option.description }}</span>
+            }
+          </span>
+        </label>
+      }
+    </div>
+  }
+  @case ('checkbox-group') {
+    <div class="options">
+      @for (option of field().options; track option.value) {
+        <label class="option">
+          <input
+            type="checkbox"
+            [checked]="isChecked(option.value)"
+            (change)="toggle(option.value)"
+          />
+          <span class="option-text">
+            <span class="option-label">{{ option.label }}</span>
+            @if (option.description) {
+              <span class="option-description">{{ option.description }}</span>
+            }
+          </span>
+        </label>
+      }
+    </div>
+    <p class="hint">O valor é um array com os values marcados.</p>
+  }
+  @default {
+    @if (multiple()) {
+      <select class="control" multiple [attr.size]="5" [formControl]="control()">
+        @for (option of field().options; track option.value) {
+          <option [ngValue]="option.value">{{ option.label }}</option>
+        }
+      </select>
+      <p class="hint">Use Ctrl ou Cmd para selecionar mais de uma opção.</p>
+    } @else {
+      <select class="control" [formControl]="control()">
+        <option [ngValue]="null">Selecione uma opção</option>
+        @for (option of field().options; track option.value) {
+          <option [ngValue]="option.value">{{ option.label }}</option>
+        }
+      </select>
+    }
+  }
+}

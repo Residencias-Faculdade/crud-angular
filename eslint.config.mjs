@@ -1,6 +1,3 @@
-// COMPATIBILIDADE COM ATIVIDADENGX - ESLint
-// ARQUIVO NOVO (antes nao existia). Garante qualidade solida para micro frontend isolado,
-// mesmo padrao rigoroso de lint que seria exigido para plugar na shell sem warnings.
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
@@ -19,5 +16,5 @@ export default tseslint.config(
       '@typescript-eslint/no-inferrable-types': 'off',
       'no-console': 'off',
     },
-  }
+  },
 );

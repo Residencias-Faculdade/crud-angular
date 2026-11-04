@@ -1,0 +1,123 @@
+<div class="fields">
+  @for (field of visibleFields(); track field.name) {
+    @if (field.type === 'object') {
+      <app-field-frame
+        [field]="field"
+        [path]="pathFor(field)"
+        [selected]="isSelected(field)"
+        [error]="errorOf(field)"
+        (inspect)="inspect.emit($event)"
+      >
+        <div class="nested">
+          <app-schema-fields
+            [fields]="field.fields"
+            [group]="groupOf(field)"
+            [rootValue]="rootValue()"
+            [selectedPath]="selectedPath()"
+            [basePath]="pathFor(field)"
+            [showErrors]="showErrors()"
+            (inspect)="inspect.emit($event)"
+          />
+        </div>
+      </app-field-frame>
+    } @else if (field.type === 'array') {
+      <app-field-frame
+        [field]="field"
+        [path]="pathFor(field)"
+        [selected]="isSelected(field)"
+        [error]="errorOf(field)"
+        (inspect)="inspect.emit($event)"
+      >
+        <div class="repeater">
+          <div class="repeater-head">
+            <span class="count">{{ itemsOf(field).length }} item(ns)</span>
+            <button type="button" class="add" [disabled]="!canAdd(field)" (click)="addItem(field)">
+              Adicionar item
+            </button>
+          </div>
+
+          @if (itemsOf(field).length === 0) {
+            <p class="empty">Nenhum item. Adicione o primeiro para ver o formulário repetir.</p>
+          }
+
+          @for (item of itemsOf(field); track $index; let index = $index) {
+            <div class="repeater-row">
+              <span class="index">{{ index + 1 }}</span>
+              <div class="repeater-body">
+                @if (field.items.type === 'object') {
+                  <app-schema-fields
+                    [fields]="field.items.fields"
+                    [group]="itemGroup(item)"
+                    [rootValue]="rootValue()"
+                    [selectedPath]="selectedPath()"
+                    [basePath]="itemBasePath(field)"
+                    [showErrors]="showErrors()"
+                    (inspect)="inspect.emit($event)"
+                  />
+                } @else if (field.items.type === 'enum') {
+                  <app-choice-control [field]="field.items" [control]="itemControl(item)" />
+                } @else if (field.items.type === 'boolean') {
+                  <label class="toggle">
+                    <input type="checkbox" [formControl]="itemControl(item)" />
+                    <span class="track"></span>
+                  </label>
+                } @else if (field.items.type === 'json') {
+                  <app-json-control [control]="itemControl(item)" />
+                } @else {
+                  <app-scalar-control [field]="field.items" [control]="itemControl(item)" />
+                }
+              </div>
+              <button type="button" class="remove" (click)="removeItem(field, index)">
+                Remover
+              </button>
+            </div>
+          }
+        </div>
+      </app-field-frame>
+    } @else if (field.type === 'enum') {
+      <app-field-frame
+        [field]="field"
+        [path]="pathFor(field)"
+        [selected]="isSelected(field)"
+        [error]="errorOf(field)"
+        (inspect)="inspect.emit($event)"
+      >
+        <app-choice-control [field]="field" [control]="controlOf(field)" />
+      </app-field-frame>
+    } @else if (field.type === 'boolean') {
+      <app-field-frame
+        [field]="field"
+        [path]="pathFor(field)"
+        [selected]="isSelected(field)"
+        [error]="errorOf(field)"
+        (inspect)="inspect.emit($event)"
+      >
+        <label class="toggle">
+          <input type="checkbox" [formControl]="controlOf(field)" />
+          <span class="track"></span>
+          <span class="toggle-state">{{ stateLabel(field) }}</span>
+        </label>
+      </app-field-frame>
+    } @else if (field.type === 'json') {
+      <app-field-frame
+        [field]="field"
+        [path]="pathFor(field)"
+        [selected]="isSelected(field)"
+        [error]="errorOf(field)"
+        (inspect)="inspect.emit($event)"
+      >
+        <app-json-control [control]="controlOf(field)" />
+      </app-field-frame>
+    } @else {
+      <app-field-frame
+        [field]="field"
+        [path]="pathFor(field)"
+        [selected]="isSelected(field)"
+        [error]="errorOf(field)"
+        (inspect)="inspect.emit($event)"
+      >
+        <app-scalar-control [field]="field" [control]="controlOf(field)" />
+      </app-field-frame>
+    }
+  }
+</div>

@@ -1,5 +1,4 @@
 {
-  "_comment": "COMPATIBILIDADE COM ATIVIDADENGX - realm importado no boot via docker-compose.yml --import-realm. COPIA IDENTICA de atividadengx/keycloak/realm.json para isolar, mas manter 1:1 (realm atividadengx, client frontend PKCE S256, redirectUris 3000/4200/4201/4202). Alterar aqui exige alterar na shell tambem.",
   "realm": "atividadengx",
   "enabled": true,
   "displayName": "atividadengx",

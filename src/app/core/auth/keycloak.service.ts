@@ -1,76 +1,106 @@
-/**
- * COMPATIBILIDADE COM ATIVIDADENGX - KeycloakService
- * --------------------------------------------------
- * ARQUIVO NOVO criado para espelhar atividadengx/src/main.ts:62-128
- * Mesma lib keycloak-js@26.2, mesmo realm/client, mesmo PKCE S256.
- * Diferenca: aqui como Angular service com signal isAuthenticated + APP_INITIALIZER,
- * na shell como funcao initAuth() procedural.
- * Sincronizado com keycloak/realm.json (realm atividadengx, client frontend publicClient:true).
- */
 import { Injectable, signal } from '@angular/core';
 import Keycloak from 'keycloak-js';
 
 import { environment } from '../../../environments/environment';
 
+const EMBEDDED_APP_PORT = '3000';
+const REFRESH_INTERVAL_MS = 20_000;
+const TOKEN_MIN_VALIDITY_SECONDS = 30;
+
 @Injectable({ providedIn: 'root' })
 export class KeycloakService {
   private instance: Keycloak | null = null;
+  private initialization: Promise<boolean> | null = null;
+  private refreshPromise: Promise<boolean> | null = null;
+  private refreshInterval: ReturnType<typeof setInterval> | null = null;
   private readonly authenticated = signal(false);
 
   readonly isAuthenticated = this.authenticated.asReadonly();
 
-  async initialize(): Promise<boolean> {
-    this.instance = new Keycloak({
-      url: environment.keycloak.url,
-      realm: environment.keycloak.realm,
-      clientId: environment.keycloak.clientId,
+  initialize(): Promise<boolean> {
+    this.initialization ??= this.createSession().catch((error: unknown) => {
+      this.initialization = null;
+      throw error;
     });
 
-    // Compatibilidade shell: se estiver dentro da casca (:3000) ja existe sessao da shell,
-    // entao nao força check-sso/silentCheck para evitar duplo login. Fora da shell usa check-sso.
-    const isEmbedded = window.location.port === '3000' && !!customElements.get('posts-crud');
-    const authenticated = await this.instance.init({
-      onLoad: isEmbedded ? undefined : 'check-sso', // shell usa login-required; standalone usa check-sso
-      silentCheckSsoRedirectUri: isEmbedded ? undefined : `${window.location.origin}/silent-check-sso.html`, // requer public/silent-check-sso.html
-      pkceMethod: 'S256', // deve casar com realm.json attributes pkce.code.challenge.method
-      checkLoginIframe: false, // desativa iframe legacy (usa silent-check)
-    });
-
-    this.authenticated.set(authenticated);
-    this.scheduleRefresh();
-    return authenticated;
+    return this.initialization;
   }
 
-  login(): Promise<void> {
-    if (!this.instance) return Promise.resolve();
-    return this.instance.login();
+  async login(): Promise<void> {
+    await this.instance?.login();
   }
 
-  logout(): Promise<void> {
-    if (!this.instance) return Promise.resolve();
-    return this.instance.logout({ redirectUri: window.location.origin });
+  async logout(): Promise<void> {
+    await this.instance?.logout({ redirectUri: window.location.origin });
+    this.stopAutoRefresh();
+    this.authenticated.set(false);
   }
 
   getToken(): string | undefined {
     return this.instance?.token;
   }
 
-  async refreshToken(): Promise<boolean> {
-    if (!this.instance) return false;
-    try {
-      const refreshed = await this.instance.updateToken(30);
-      return refreshed;
-    } catch {
-      this.authenticated.set(false);
-      return false;
-    }
+  refreshToken(): Promise<boolean> {
+    if (!this.instance) return Promise.resolve(false);
+
+    this.refreshPromise ??= this.instance
+      .updateToken(TOKEN_MIN_VALIDITY_SECONDS)
+      .then(() => {
+        const authenticated = Boolean(this.instance?.token);
+        this.authenticated.set(authenticated);
+        return authenticated;
+      })
+      .catch(() => {
+        this.authenticated.set(false);
+        return false;
+      })
+      .finally(() => {
+        this.refreshPromise = null;
+      });
+
+    return this.refreshPromise;
   }
 
-  // Renova token a cada 20s se expira em <30s, igual a shell scheduleRefresh() 20s/30s
-  private scheduleRefresh(): void {
-    if (!this.instance) return;
-    setInterval(() => {
-      void this.refreshToken(); // usa updateToken(30) interno
-    }, 20000);
+  private async createSession(): Promise<boolean> {
+    this.instance = new Keycloak({
+      url: environment.keycloak.url,
+      realm: environment.keycloak.realm,
+      clientId: environment.keycloak.clientId,
+    });
+
+    const embedded = this.isEmbedded();
+
+    const authenticated = await this.instance.init({
+      onLoad: embedded ? undefined : 'check-sso',
+      silentCheckSsoRedirectUri: embedded
+        ? undefined
+        : `${window.location.origin}/silent-check-sso.html`,
+      pkceMethod: 'S256',
+      checkLoginIframe: false,
+    });
+
+    this.authenticated.set(authenticated);
+    this.startAutoRefresh();
+
+    return authenticated;
+  }
+
+  private isEmbedded(): boolean {
+    return window.location.port === EMBEDDED_APP_PORT;
+  }
+
+  private startAutoRefresh(): void {
+    if (this.refreshInterval !== null) return;
+
+    this.refreshInterval = setInterval(() => {
+      void this.refreshToken();
+    }, REFRESH_INTERVAL_MS);
+  }
+
+  private stopAutoRefresh(): void {
+    if (this.refreshInterval === null) return;
+
+    clearInterval(this.refreshInterval);
+    this.refreshInterval = null;
   }
 }

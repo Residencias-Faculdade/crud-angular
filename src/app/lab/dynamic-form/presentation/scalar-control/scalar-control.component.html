@@ -1,0 +1,45 @@
+@switch (widget()) {
+  @case ('textarea') {
+    <textarea
+      class="control"
+      rows="4"
+      [formControl]="control()"
+      [placeholder]="placeholder()"
+    ></textarea>
+  }
+  @case ('range') {
+    <div class="range-row">
+      <input
+        class="control"
+        type="range"
+        [formControl]="control()"
+        [min]="min()"
+        [max]="max()"
+        [step]="step() ?? 1"
+      />
+      <output class="range-value">{{ control().value ?? 0 }}</output>
+    </div>
+  }
+  @case ('number') {
+    <input
+      class="control"
+      type="number"
+      [formControl]="control()"
+      [placeholder]="placeholder()"
+      [min]="min()"
+      [max]="max()"
+      [step]="step()"
+    />
+  }
+  @default {
+    <input
+      class="control"
+      [type]="inputType()"
+      [formControl]="control()"
+      [placeholder]="placeholder()"
+      [min]="min()"
+      [max]="max()"
+      [step]="step()"
+    />
+  }
+}

@@ -1,0 +1,17 @@
+<div class="editor">
+  <div class="toolbar">
+    <span class="hint">Objeto, array ou primitivo em JSON válido.</span>
+    <button type="button" class="format" (click)="format()">Formatar</button>
+  </div>
+  <textarea
+    class="code"
+    rows="6"
+    spellcheck="false"
+    [value]="text()"
+    (input)="onInput($event)"
+    placeholder="{ }"
+  ></textarea>
+  @if (parseError(); as message) {
+    <p class="error">{{ message }}</p>
+  }
+</div>

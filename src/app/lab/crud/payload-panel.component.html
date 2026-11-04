@@ -1,0 +1,38 @@
+<div class="payload-grid">
+  <section class="payload-card">
+    <header class="payload-head">
+      <h3>Payload atual</h3>
+      <button type="button" class="ghost" (click)="copy.emit()">
+        @switch (copyState()) {
+          @case ('copied') {
+            copiado
+          }
+          @case ('failed') {
+            falhou
+          }
+          @default {
+            copiar
+          }
+        }
+      </button>
+    </header>
+    <p class="hint">
+      Lido de <code>form.value</code>: campos ocultos ficam desabilitados e saem do payload.
+    </p>
+    <pre class="payload">{{ payloadJson() }}</pre>
+  </section>
+
+  <section class="payload-card">
+    <header class="payload-head">
+      <h3>Último envio</h3>
+    </header>
+    @if (submittedJson(); as json) {
+      <pre class="payload">{{ json }}</pre>
+    } @else {
+      <p class="muted">
+        Preencha o formulário e clique em enviar. O resultado exibido aqui é exatamente o que o
+        submit recebeu.
+      </p>
+    }
+  </section>
+</div>

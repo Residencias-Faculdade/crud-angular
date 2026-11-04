@@ -1,0 +1,52 @@
+<section class="form-shell">
+  <header class="form-head">
+    <div>
+      <h2>{{ schema().title }}</h2>
+      @if (schema().description) {
+        <p class="form-description">{{ schema().description }}</p>
+      }
+    </div>
+    <div class="meta">
+      <span class="pill">{{ fieldCount() }} campos</span>
+      <span class="pill" [class.pill-ok]="status() === 'VALID'">{{ statusLabel() }}</span>
+    </div>
+  </header>
+
+  <nav class="section-tabs" role="tablist" aria-label="Seções do formulário">
+    @for (section of schema().sections; track section.id) {
+      <button
+        type="button"
+        role="tab"
+        class="section-tab"
+        [class.active]="activeSection()?.id === section.id"
+        [attr.aria-selected]="activeSection()?.id === section.id"
+        (click)="selectSection(section.id)"
+      >
+        {{ section.title }}
+      </button>
+    }
+  </nav>
+
+  @if (activeSection(); as section) {
+    @if (section.description) {
+      <p class="section-description">{{ section.description }}</p>
+    }
+
+    <app-schema-fields
+      [fields]="section.fields"
+      [group]="form()"
+      [rootValue]="rawValue()"
+      [selectedPath]="selectedPath()"
+      [showErrors]="submittedOnce()"
+      (inspect)="inspect.emit($event)"
+    />
+  }
+
+  <footer class="form-actions">
+    <button type="button" class="primary" (click)="submit()">
+      {{ schema().submitLabel ?? 'Enviar' }}
+    </button>
+    <button type="button" class="ghost" (click)="reset()">Limpar</button>
+    <span class="state">{{ statusLabel() }}</span>
+  </footer>
+</section>

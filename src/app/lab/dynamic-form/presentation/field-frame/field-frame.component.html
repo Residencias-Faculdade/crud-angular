@@ -1,0 +1,38 @@
+<section class="frame" [class.selected]="selected()" [class.invalid]="error() !== null">
+  <header class="frame-header">
+    <div class="heading">
+      <span class="label">{{ field().label }}</span>
+      @if (field().required) {
+        <span class="badge badge-required">obrigatório</span>
+      }
+      <span class="badge">{{ field().type }}</span>
+      @if (widget(); as activeWidget) {
+        <span class="badge badge-widget">{{ activeWidget }}</span>
+      }
+      <span class="badge badge-shape">{{ shape() }}</span>
+    </div>
+    <button
+      type="button"
+      class="inspect"
+      (click)="inspect.emit(path())"
+      [attr.aria-label]="'Ver configuração de ' + field().label"
+    >
+      config
+    </button>
+  </header>
+
+  @if (field().description) {
+    <p class="description">{{ field().description }}</p>
+  }
+
+  <div class="control-slot">
+    <ng-content />
+  </div>
+
+  <div class="frame-footer">
+    <code class="path">{{ path() }}</code>
+    @if (error(); as message) {
+      <span class="error">{{ message }}</span>
+    }
+  </div>
+</section>

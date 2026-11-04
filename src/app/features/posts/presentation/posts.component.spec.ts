@@ -1,8 +1,33 @@
-import { provideHttpClient } from '@angular/common/http';
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { WritableSignal } from '@angular/core';
+import { of } from 'rxjs';
 
-import { PostsComponent } from './posts.component';
+import { PostRepository } from '../data/post.repository';
 import { Post } from '../domain/post.model';
+import { PostsStore } from '../application/posts.store';
+import { PostsComponent } from './posts.component';
+
+interface PostsComponentApi {
+  store: PostsStore;
+  newTitle: WritableSignal<string>;
+  newBody: WritableSignal<string>;
+  editingId: WritableSignal<number | null>;
+  editTitle: WritableSignal<string>;
+  editBody: WritableSignal<string>;
+  showDeleteModal: WritableSignal<boolean>;
+  postToDelete: WritableSignal<Post | null>;
+  createPost(): void;
+  startEdit(post: Post): void;
+  saveEdit(): void;
+  cancelEdit(): void;
+  openDeleteModal(post: Post): void;
+  confirmDelete(): void;
+  closeDeleteModal(): void;
+  reload(): void;
+  nextPage(): void;
+  prevPage(): void;
+  goToPage(page: number): void;
+}
 
 describe('PostsComponent', () => {
   const mockPosts: Post[] = Array.from({ length: 12 }, (_, index) => ({
@@ -16,126 +41,140 @@ describe('PostsComponent', () => {
     Object.defineProperty(window, 'scrollTo', { value: vi.fn(), writable: true });
   });
 
-  function createComponent(): PostsComponent {
-    TestBed.configureTestingModule({
-      imports: [PostsComponent],
-      providers: [provideHttpClient()],
-    });
-    const fixture = TestBed.createComponent(PostsComponent);
-    const component = fixture.componentInstance as unknown as {
-      postsResource: {
-        value: () => Post[] | undefined;
-        isLoading: () => boolean;
-        error: () => unknown;
-        reload: () => void;
-      };
-    };
-    vi.spyOn(component.postsResource, 'value').mockReturnValue(mockPosts);
-    vi.spyOn(component.postsResource, 'isLoading').mockReturnValue(false);
-    vi.spyOn(component.postsResource, 'error').mockReturnValue(null);
-    fixture.detectChanges();
-    return fixture.componentInstance;
-  }
-
   beforeEach(() => TestBed.resetTestingModule());
 
-  it('should create', () => {
-    const component = createComponent();
+  async function createComponent(): Promise<{
+    fixture: ComponentFixture<PostsComponent>;
+    component: PostsComponentApi;
+  }> {
+    TestBed.configureTestingModule({
+      imports: [PostsComponent],
+      providers: [{ provide: PostRepository, useValue: { findAll: () => of(mockPosts) } }],
+    });
+
+    const fixture = TestBed.createComponent(PostsComponent);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    return {
+      fixture,
+      component: fixture.componentInstance as unknown as PostsComponentApi,
+    };
+  }
+
+  it('should create and load api posts', async () => {
+    const { component } = await createComponent();
+
     expect(component).toBeTruthy();
-    expect(component.apiPosts().length).toBe(12);
+    await vi.waitFor(() => expect(component.store.posts().length).toBe(12));
   });
 
-  it('should paginate api posts', () => {
-    const component = createComponent();
-    expect(component.totalPages()).toBe(2);
-    expect(component.paginatedApiPosts().length).toBe(10);
+  it('should paginate api posts', async () => {
+    const { component } = await createComponent();
+    await vi.waitFor(() => expect(component.store.totalPages()).toBe(2));
+
+    expect(component.store.pagePosts().length).toBe(10);
+
     component.nextPage();
-    expect(component.currentPage()).toBe(2);
-    expect(component.paginatedApiPosts().length).toBe(2);
+
+    expect(component.store.currentPage()).toBe(2);
+    expect(component.store.pagePosts().length).toBe(2);
+
     component.prevPage();
-    expect(component.currentPage()).toBe(1);
+
+    expect(component.store.currentPage()).toBe(1);
+
     component.goToPage(2);
-    expect(component.currentPage()).toBe(2);
     component.goToPage(99);
-    expect(component.currentPage()).toBe(2);
+
+    expect(component.store.currentPage()).toBe(2);
   });
 
-  it('should create user post', () => {
-    const component = createComponent();
+  it('should create a draft post', async () => {
+    const { component } = await createComponent();
+
     component.newTitle.set('novo titulo');
     component.newBody.set('novo conteudo');
-    expect(component.canCreate()).toBe(true);
     component.createPost();
-    expect(component.userPosts().length).toBe(1);
-    expect(component.userPosts()[0].title).toBe('novo titulo');
+
+    expect(component.store.drafts()).toHaveLength(1);
+    expect(component.store.drafts()[0].title).toBe('novo titulo');
     expect(component.newTitle()).toBe('');
   });
 
-  it('should not create when empty', () => {
-    const component = createComponent();
-    component.newTitle.set('');
+  it('should not create a draft when fields are empty', async () => {
+    const { component } = await createComponent();
+
+    component.newTitle.set('   ');
     component.newBody.set('');
-    expect(component.canCreate()).toBe(false);
     component.createPost();
-    expect(component.userPosts().length).toBe(0);
+
+    expect(component.store.drafts()).toHaveLength(0);
   });
 
-  it('should edit user post', () => {
-    const component = createComponent();
-    component.newTitle.set('a');
-    component.newBody.set('b');
+  it('should edit a draft post', async () => {
+    const { component } = await createComponent();
+
+    component.newTitle.set('titulo');
+    component.newBody.set('corpo');
     component.createPost();
-    const created = component.userPosts()[0];
-    component.startEdit(created);
-    expect(component.editingId()).toBe(created.id);
+
+    const draft = component.store.drafts()[0];
+    component.startEdit(draft);
     component.editTitle.set('editado');
     component.editBody.set('corpo editado');
     component.saveEdit();
-    expect(component.userPosts()[0].title).toBe('editado');
+
+    expect(component.store.drafts()[0].title).toBe('editado');
     expect(component.editingId()).toBeNull();
   });
 
-  it('should cancel edit', () => {
-    const component = createComponent();
-    component.newTitle.set('x');
-    component.newBody.set('y');
+  it('should cancel an edit', async () => {
+    const { component } = await createComponent();
+
+    component.newTitle.set('titulo');
+    component.newBody.set('corpo');
     component.createPost();
-    component.startEdit(component.userPosts()[0]);
+    component.startEdit(component.store.drafts()[0]);
     component.cancelEdit();
+
     expect(component.editingId()).toBeNull();
   });
 
-  it('should handle modal delete flow', () => {
-    const component = createComponent();
-    component.newTitle.set('t');
-    component.newBody.set('b');
+  it('should delete a draft through the confirmation modal', async () => {
+    const { component } = await createComponent();
+
+    component.newTitle.set('titulo');
+    component.newBody.set('corpo');
     component.createPost();
-    const post = component.userPosts()[0];
-    component.openDeleteModal(post);
+
+    const draft = component.store.drafts()[0];
+    component.openDeleteModal(draft);
+
     expect(component.showDeleteModal()).toBe(true);
-    expect(component.postToDelete()?.id).toBe(post.id);
+    expect(component.postToDelete()?.id).toBe(draft.id);
+
     component.confirmDelete();
-    expect(component.userPosts().length).toBe(0);
-    expect(component.showDeleteModal()).toBe(false);
-    component.openDeleteModal(post);
-    component.closeDeleteModal();
+
+    expect(component.store.drafts()).toHaveLength(0);
     expect(component.showDeleteModal()).toBe(false);
   });
 
-  it('should handle confirm without selection', () => {
-    const component = createComponent();
+  it('should ignore confirmation without a selected post', async () => {
+    const { component } = await createComponent();
+
     component.confirmDelete();
-    expect(component.userPosts().length).toBe(0);
+
+    expect(component.store.drafts()).toHaveLength(0);
   });
 
-  it('should reload', () => {
-    const component = createComponent();
-    const reloadSpy = vi.spyOn(
-      (component as unknown as { postsResource: { reload: () => void } }).postsResource,
-      'reload',
-    );
-    component.fetchPosts();
-    expect(reloadSpy).toHaveBeenCalled();
-    expect(component.currentPage()).toBe(1);
+  it('should reload posts and reset pagination', async () => {
+    const { component } = await createComponent();
+    await vi.waitFor(() => expect(component.store.totalPages()).toBe(2));
+
+    component.goToPage(2);
+    component.reload();
+
+    expect(component.store.currentPage()).toBe(1);
   });
 });

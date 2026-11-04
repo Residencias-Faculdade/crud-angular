@@ -1,0 +1,112 @@
+<div class="lab">
+  <header class="lab-head">
+    <div class="lab-title">
+      <span class="eyebrow">laboratório isolado</span>
+      <h1>CRUD configurável por schema</h1>
+      <p class="intro">
+        Nenhum campo abaixo existe no TypeScript. A tela inteira é montada a partir do JSON ou YAML
+        aplicado: tipo, widget, opções, regras e visibilidade vêm do contrato.
+      </p>
+    </div>
+
+    <div class="stats">
+      <span class="stat">{{ schema()?.sections?.length ?? 0 }} seções</span>
+      <span class="stat">{{ fieldTotal() }} campos</span>
+      <span class="stat" [class.stat-error]="errorCount() > 0">{{ errorCount() }} erros</span>
+      <span class="stat">{{ warningCount() }} avisos</span>
+    </div>
+  </header>
+
+  <section class="samples" aria-label="Exemplos de schema">
+    @for (sample of samples; track sample.id) {
+      <button
+        type="button"
+        class="sample"
+        [class.active]="sampleId() === sample.id"
+        (click)="selectSample(sample)"
+      >
+        <span class="sample-label">{{ sample.label }}</span>
+        <span class="sample-summary">{{ sample.summary }}</span>
+        <span class="sample-format">{{ sample.format }}</span>
+      </button>
+    }
+  </section>
+
+  <nav class="views" role="tablist" aria-label="Visões do laboratório">
+    @for (tab of tabs; track tab.id) {
+      <button
+        type="button"
+        role="tab"
+        class="view-tab"
+        [class.active]="activeTab() === tab.id"
+        [attr.aria-selected]="activeTab() === tab.id"
+        (click)="selectTab(tab.id)"
+      >
+        {{ tab.label }}
+      </button>
+    }
+  </nav>
+
+  @if (activeTab() === 'form') {
+    @if (schema(); as activeSchema) {
+      @if (form(); as activeForm) {
+        <app-dynamic-form
+          [schema]="activeSchema"
+          [form]="activeForm"
+          [selectedPath]="selectedPath()"
+          (inspect)="inspectField($event)"
+          (submitted)="onSubmitted($event)"
+          (payloadChange)="onPayloadChange($event)"
+        />
+      }
+    } @else {
+      <section class="empty-state">
+        <h2>O schema não pôde ser compilado</h2>
+        <p>
+          O formulário só é renderizado quando o contrato é válido. Corrija os pontos abaixo na aba
+          <strong>Fonte do schema</strong>.
+        </p>
+        <app-schema-issues [issues]="issues()" />
+        <button type="button" class="primary" (click)="selectTab('schema')">Revisar fonte</button>
+      </section>
+    }
+  }
+
+  @if (activeTab() === 'schema') {
+    <app-source-panel
+      [draft]="draft()"
+      [format]="format()"
+      [issues]="issues()"
+      [schema]="schema()"
+      (draftChange)="draft.set($event)"
+      (formatChange)="selectFormat($event)"
+      (apply)="applyDraft()"
+      (restore)="restoreDraft()"
+    />
+  }
+
+  @if (activeTab() === 'inspector') {
+    @if (schema()) {
+      <app-schema-inspector
+        [entries]="entries()"
+        [selected]="selectedEntry()"
+        [rootValue]="rootValue()"
+        (select)="selectField($event)"
+      />
+    } @else {
+      <section class="empty-state">
+        <h2>Sem tipagem para inspecionar</h2>
+        <app-schema-issues [issues]="issues()" />
+      </section>
+    }
+  }
+
+  @if (activeTab() === 'payload') {
+    <app-payload-panel
+      [payloadJson]="payloadJson()"
+      [submittedJson]="submittedJson()"
+      [copyState]="copyState()"
+      (copy)="copyPayload()"
+    />
+  }
+</div>

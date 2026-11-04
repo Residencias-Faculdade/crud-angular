@@ -1,0 +1,73 @@
+<div class="source">
+  <section class="editor">
+    <div class="editor-head">
+      <div class="formats">
+        <button
+          type="button"
+          class="format"
+          [class.active]="format() === 'yaml'"
+          (click)="formatChange.emit('yaml')"
+        >
+          YAML
+        </button>
+        <button
+          type="button"
+          class="format"
+          [class.active]="format() === 'json'"
+          (click)="formatChange.emit('json')"
+        >
+          JSON
+        </button>
+      </div>
+      <div class="editor-actions">
+        <button type="button" class="ghost" (click)="restore.emit()">Restaurar exemplo</button>
+        <button type="button" class="primary" (click)="apply.emit()">Aplicar schema</button>
+      </div>
+    </div>
+
+    <textarea
+      class="code"
+      spellcheck="false"
+      [value]="draft()"
+      (input)="onInput($event)"
+    ></textarea>
+
+    <p class="hint">
+      Trocar o formato reinterpreta o mesmo texto. Ao aplicar, o formulário e a tipagem são
+      reconstruídos do zero.
+    </p>
+  </section>
+
+  <aside class="source-side">
+    <section class="side-block">
+      <h3>Diagnóstico</h3>
+      <app-schema-issues [issues]="issues()" />
+    </section>
+
+    <section class="side-block">
+      <h3>Estrutura normalizada</h3>
+      @if (schema(); as activeSchema) {
+        <ul class="structure">
+          @for (section of activeSchema.sections; track section.id) {
+            <li class="structure-section">
+              <div class="structure-head">
+                <strong>{{ section.title }}</strong>
+                <span>{{ section.fields.length }} campos</span>
+              </div>
+              <ul class="structure-fields">
+                @for (field of section.fields; track field.name) {
+                  <li>
+                    <code>{{ field.name }}</code>
+                    <span>{{ field.type }}</span>
+                  </li>
+                }
+              </ul>
+            </li>
+          }
+        </ul>
+      } @else {
+        <p class="muted">Corrija os erros para ver a árvore normalizada.</p>
+      }
+    </section>
+  </aside>
+</div>

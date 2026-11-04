@@ -1,0 +1,56 @@
+@import '../styles/controls.css';
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.hint {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.format {
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #f9fafb;
+  color: #374151;
+  font: inherit;
+  font-size: 0.75rem;
+  padding: 3px 9px;
+  cursor: pointer;
+}
+
+.format:hover {
+  border-color: #c7d2fe;
+  color: #1d4ed8;
+}
+
+.code {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: #111827;
+  background: #fbfbfd;
+  resize: vertical;
+}
+
+.code:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.error {
+  margin: 6px 0 0;
+  color: #b91c1c;
+  font-size: 0.78rem;
+}

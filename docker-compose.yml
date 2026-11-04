@@ -1,20 +1,15 @@
-# COMPATIBILIDADE COM ATIVIDADENGX - docker-compose
-# ARQUIVO NOVO (antes nao existia). Cria rede app-network + keycloak compartilhado com a shell.
-# Variaveis .env (FRONTEND_PORT, KEYCLOAK_PORT) alinhadas com atividadengx/.env.example
-# SHELL (atividadengx/docker-compose.yml) tambem define posts-crud com build ../primeiro-projeto,
-# entao este compose pode rodar standalone OU a shell orquestra tudo junto.
 services:
-  frontend: # renomear para posts-crud se quiser identico a shell, mas mantido frontend para retrocompat
+  frontend:
     build:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "${FRONTEND_PORT:-4200}:80" # mesma porta que shell espera em POSTS_CRUD_PORT
+      - "${FRONTEND_PORT:-4200}:80"
     depends_on:
       keycloak:
         condition: service_started
     networks:
-      - app-network # mesma rede da shell para comunicacao keycloak
+      - app-network
     restart: unless-stopped
 
   keycloak:

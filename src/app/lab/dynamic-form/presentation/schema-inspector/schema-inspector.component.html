@@ -1,0 +1,123 @@
+<div class="inspector">
+  <aside class="tree">
+    <h3 class="tree-title">Campos do schema</h3>
+    <ul class="tree-list">
+      @for (entry of entries(); track entry.path) {
+        <li>
+          <button
+            type="button"
+            class="tree-item"
+            [class.active]="selected()?.path === entry.path"
+            [style.paddingLeft.px]="indent(entry)"
+            (click)="select.emit(entry.path)"
+          >
+            <span class="tree-name">{{ entry.field.name }}</span>
+            <span class="tree-type">{{ widgetLabel(entry.field) }}</span>
+            @if (entry.depth === 0) {
+              <span class="tree-section">{{ entry.sectionTitle }}</span>
+            }
+          </button>
+        </li>
+      }
+    </ul>
+  </aside>
+
+  <section class="details">
+    @if (selected(); as entry) {
+      <header class="details-head">
+        <div>
+          <h3>{{ entry.field.label }}</h3>
+          <code class="path">{{ entry.path }}</code>
+        </div>
+        <div class="tags">
+          <span class="tag">{{ entry.field.type }}</span>
+          <span class="tag tag-widget">{{ widgetLabel(entry.field) }}</span>
+          <span class="tag tag-shape">{{ activeShape() }}</span>
+        </div>
+      </header>
+
+      @if (entry.field.description) {
+        <p class="description">{{ entry.field.description }}</p>
+      }
+
+      @if (activeDoc(); as doc) {
+        <div class="block">
+          <h4>{{ doc.title }}</h4>
+          <p>{{ doc.description }}</p>
+          <p class="payload">
+            valor no payload: <code>{{ doc.payload }}</code>
+          </p>
+        </div>
+      }
+
+      <div class="grid">
+        <div class="block">
+          <h4>Regras aplicadas</h4>
+          @if (activeRules().length === 0) {
+            <p class="muted">Nenhuma regra declarada.</p>
+          } @else {
+            <ul class="rules">
+              @for (rule of activeRules(); track rule) {
+                <li>{{ rule }}</li>
+              }
+            </ul>
+          }
+        </div>
+
+        <div class="block">
+          <h4>Valor atual</h4>
+          <pre class="value">{{ currentValue(entry) }}</pre>
+        </div>
+      </div>
+
+      @if (activeOptions().length > 0) {
+        <div class="block">
+          <h4>Opções</h4>
+          <table class="options">
+            <thead>
+              <tr>
+                <th>label</th>
+                <th>value</th>
+                <th>descrição</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (option of activeOptions(); track option.value) {
+                <tr>
+                  <td>{{ option.label }}</td>
+                  <td>
+                    <code>{{ option.value }}</code>
+                  </td>
+                  <td>{{ option.description ?? '—' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+
+      @if (entry.field.visibleWhen; as condition) {
+        <div class="block">
+          <h4>Visibilidade condicional</h4>
+          <p class="muted">
+            visível quando <code>{{ condition.field }}</code>
+            @if (condition.in) {
+              estiver em <code>{{ condition.in | json }}</code>
+            } @else if (condition.equals !== undefined) {
+              for igual a <code>{{ condition.equals | json }}</code>
+            } @else {
+              for verdadeiro
+            }
+          </p>
+        </div>
+      }
+
+      <div class="block">
+        <h4>Definição normalizada</h4>
+        <pre class="value">{{ entry.field | json }}</pre>
+      </div>
+    } @else {
+      <p class="muted">Selecione um campo para ver a tipagem completa.</p>
+    }
+  </section>
+</div>

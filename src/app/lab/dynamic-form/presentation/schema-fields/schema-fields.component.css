@@ -1,0 +1,147 @@
+.fields {
+  display: grid;
+  gap: 14px;
+}
+
+.nested {
+  border-left: 2px dashed #e5e7eb;
+  padding-left: 12px;
+}
+
+.repeater {
+  display: grid;
+  gap: 10px;
+}
+
+.repeater-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.count {
+  font-size: 0.78rem;
+  color: #6b7280;
+}
+
+.add,
+.remove {
+  border: 1px solid #d1d5db;
+  border-radius: 7px;
+  background: #f9fafb;
+  color: #374151;
+  font: inherit;
+  font-size: 0.76rem;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+
+.add:hover:not(:disabled) {
+  border-color: #a7f3d0;
+  color: #047857;
+  background: #ecfdf5;
+}
+
+.add:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.remove:hover {
+  border-color: #fecaca;
+  color: #b91c1c;
+  background: #fef2f2;
+}
+
+.empty {
+  margin: 0;
+  padding: 10px;
+  border: 1px dashed #e5e7eb;
+  border-radius: 8px;
+  color: #9ca3af;
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+.repeater-row {
+  display: grid;
+  grid-template-columns: 24px 1fr auto;
+  align-items: start;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid #f3f4f6;
+  border-radius: 10px;
+  background: #fcfcfd;
+}
+
+.index {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #f3f4f6;
+  color: #4b5563;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.repeater-body {
+  min-width: 0;
+}
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.toggle input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.track {
+  position: relative;
+  width: 42px;
+  height: 24px;
+  border-radius: 999px;
+  background: #d1d5db;
+  transition: background 0.15s ease;
+}
+
+.track::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  transition: transform 0.15s ease;
+}
+
+.toggle input:checked + .track {
+  background: #111827;
+}
+
+.toggle input:checked + .track::after {
+  transform: translateX(18px);
+}
+
+.toggle input:focus-visible + .track {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+}
+
+.toggle-state {
+  font-size: 0.8rem;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}

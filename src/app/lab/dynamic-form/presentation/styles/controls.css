@@ -1,0 +1,46 @@
+.control {
+  width: 100%;
+  padding: 9px 11px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font: inherit;
+  color: #111827;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.control:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+textarea.control {
+  resize: vertical;
+  min-height: 88px;
+  line-height: 1.5;
+}
+
+.range-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.range-row .control {
+  padding: 0;
+  border: none;
+  box-shadow: none;
+  accent-color: #111827;
+}
+
+.range-value {
+  min-width: 44px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: #111827;
+  background: #f3f4f6;
+  border-radius: 6px;
+  padding: 4px 8px;
+}

@@ -1,0 +1,13 @@
+@if (issues().length === 0) {
+  <p class="clean">Schema válido, nenhum problema encontrado.</p>
+} @else {
+  <ul class="issues">
+    @for (issue of issues(); track issue.path + issue.message) {
+      <li class="issue" [class.issue-error]="issue.severity === 'error'">
+        <span class="severity">{{ issue.severity }}</span>
+        <code class="path">{{ issue.path }}</code>
+        <span class="message">{{ issue.message }}</span>
+      </li>
+    }
+  </ul>
+}
